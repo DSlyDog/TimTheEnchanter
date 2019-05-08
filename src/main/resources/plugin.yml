@@ -1,0 +1,31 @@
+name: TimTheEnchanter
+version: ${project.version}
+main: net.whispwriting.timtheenchanter.TimTheEnchanter
+api-version: "1.13"
+prefix: Tim
+authors: [WhispTheFox]
+description: Enchanter Plugin
+website: https://whispwriting.net
+
+commands:
+  enchant:
+    description: Enchant an item
+    usage: /enchant
+
+permissions:
+  TimTheEnchanter.enchant:
+    description: Allows using /enchant
+    default: op
+  TimTheEnchanter.enchant.unsafe:
+    description: allows for unsafe enchanting
+    default: op
+  TimTheEnchanter.enchant.all:
+    description: allows using /enchant all
+    default: op
+  TimTheEnchanter.*:
+    description: Wildcard command
+    default: op
+    children:
+      TimTheEnchanter.enchant: true
+      TimTheEnchanter.enchant.unsafe: true
+      TimTheEnchanter.enchant.all: true
