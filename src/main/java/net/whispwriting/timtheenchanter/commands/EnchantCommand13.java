@@ -16,7 +16,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.lang.reflect.Array;
 import java.util.*;
 
-public class EnchantCommand implements CommandExecutor {
+public class EnchantCommand13 implements CommandExecutor {
+
+    private boolean safeEnch = false;
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -36,7 +38,13 @@ public class EnchantCommand implements CommandExecutor {
                 if (args[0].equalsIgnoreCase("all")){
                     if (player.hasPermission("TimTheEnchanter.enchant.all")) {
                         if (args.length == 2) {
-                            enchAll(player, item, args[1]);
+                            if (args[1].equals("safe")) {
+                                safeEnch = true;
+                                enchAll(player, item);
+                                safeEnch = false;
+                            }else {
+                                enchAll(player, item, args[1]);
+                            }
                         } else {
                             enchAll(player, item);
                         }
@@ -138,6 +146,7 @@ public class EnchantCommand implements CommandExecutor {
                                     if (enchNameLow.equals("sweeping")){
                                         enchNameLow = "sweeping edge";
                                     }
+
                                     String enchName = "";
                                     if (enchNameLow.contains(" ")) {
                                         List<String> enchStrList = Arrays.asList(enchNameLow.split(" "));
@@ -246,7 +255,7 @@ public class EnchantCommand implements CommandExecutor {
             ench = (Enchantment) Array.get(e, i);
             enchants.add(ench);
         }
-        if (player.hasPermission("TimTheEnchanter.enchant.unsafe")){
+        if (player.hasPermission("TimTheEnchanter.enchant.unsafe") && !safeEnch){
             for (int i=0; i<enchants.size(); i++) {
                 item.addUnsafeEnchantment(enchants.get(i), 1000);
                 ItemMeta meta = item.getItemMeta();

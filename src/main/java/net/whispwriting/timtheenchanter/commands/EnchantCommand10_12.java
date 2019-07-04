@@ -14,7 +14,9 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.lang.reflect.Array;
 import java.util.*;
 
-public class EnchantCommandOldVersion implements CommandExecutor {
+public class EnchantCommand10_12 implements CommandExecutor {
+
+    private boolean safeEnch = false;
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args){
@@ -34,7 +36,13 @@ public class EnchantCommandOldVersion implements CommandExecutor {
                 if (args[0].equalsIgnoreCase("all")){
                     if (player.hasPermission("TimTheEnchanter.enchant.all")) {
                         if (args.length == 2) {
-                            enchAll(player, item, args[1]);
+                            if (args[1].equals("safe")) {
+                                safeEnch = true;
+                                enchAll(player, item);
+                                safeEnch = false;
+                            }else {
+                                enchAll(player, item, args[1]);
+                            }
                         } else {
                             enchAll(player, item);
                         }
@@ -52,6 +60,10 @@ public class EnchantCommandOldVersion implements CommandExecutor {
                             return true;
                         }else{
                             String enchantment = getEnchantmentName(args[0]);
+                            if (enchantment.equals("not found")){
+                                player.sendMessage(ChatColor.YELLOW + "[Tim] Sorry, " + args[0] + " is not in my spellbook.");
+                                return true;
+                            }
                             item.addUnsafeEnchantment(Enchantment.getByName(enchantment), level);
                             ItemMeta meta = item.getItemMeta();
                             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
@@ -247,7 +259,7 @@ public class EnchantCommandOldVersion implements CommandExecutor {
             ench = (Enchantment) Array.get(e, i);
             enchants.add(ench);
         }
-        if (player.hasPermission("TimTheEnchanter.enchant.unsafe")){
+        if (player.hasPermission("TimTheEnchanter.enchant.unsafe") && !safeEnch){
             for (int i=0; i<enchants.size(); i++) {
                 item.addUnsafeEnchantment(enchants.get(i), 1000);
                 ItemMeta meta = item.getItemMeta();
@@ -897,97 +909,67 @@ public class EnchantCommandOldVersion implements CommandExecutor {
         String name = s;
         switch (s) {
             case "protection":
-                name = "PROTECTION_ENVIRONMENTAL";
-                break;
+                return "PROTECTION_ENVIRONMENTAL";
             case "fire_protection":
-                name = "PROTECTION_FIRE";
-                break;
+                return "PROTECTION_FIRE";
             case "feather_falling":
-                name = "PROTECTION_FALL";
-                break;
+                return "PROTECTION_FALL";
             case "blast_protection":
-                name = "PROTECTION_EXPLOSIONS";
-                break;
+                return "PROTECTION_EXPLOSIONS";
             case "projectile_protection":
-                name = "PROTECTION_PROJECTILE";
-                break;
+                return "PROTECTION_PROJECTILE";
             case "respiration":
-                name = "OXYGEN";
-                break;
+                return "OXYGEN";
             case "aqua_affinity":
-                name = "WATER_WORKER";
-                break;
+                return "WATER_WORKER";
             case "thorns":
-                name = "THORNS";
-                break;
+                return "THORNS";
             case "depth_strider":
-                name = "DEPTH_STRIDER";
-                break;
+                return "DEPTH_STRIDER";
             case "frost_walker":
-                name = "FROST_WALKER";
-                break;
+                return "FROST_WALKER";
             case "binding_curse":
-                name = "BINDING_CURSE";
-                break;
+                return "BINDING_CURSE";
             case "sharpness":
-                name = "DAMAGE_ALL";
-                break;
+                return "DAMAGE_ALL";
             case "smite":
-                name = "DAMAGE_UNDEAD";
-                break;
+                return "DAMAGE_UNDEAD";
             case "bane_of_arthropods":
-                name = "DAMAGE_ARTHROPODS";
-                break;
+                return "DAMAGE_ARTHROPODS";
             case "knockback":
-                name = "KNOCKBACK";
-                break;
+                return "KNOCKBACK";
             case "fire_aspect":
-                name = "FIRE_ASPECT";
-                break;
+                return "FIRE_ASPECT";
             case "looting":
-                name = "LOOT_BONUS_MOBS";
-                break;
+                return "LOOT_BONUS_MOBS";
             case "sweeping_edge":
-                name = "SWEEPING_EDGE";
-                break;
+                return "SWEEPING_EDGE";
             case "efficiency":
-                name = "DIG_SPEED";
-                break;
+                return "DIG_SPEED";
             case "silk_touch":
-                name = "SILK_TOUCH";
-                break;
+                return "SILK_TOUCH";
             case "unbeaking":
-                name = "DURABILITY";
-                break;
+                return "DURABILITY";
             case "fortune":
-                name = "LOOT_BONUS_BLOCKS";
-                break;
+                return "LOOT_BONUS_BLOCKS";
             case "power":
-                name = "ARROW_DAMAGE";
-                break;
+                return "ARROW_DAMAGE";
             case "punch":
-                name = "ARROW_KNOCKBACK";
-                break;
+                return "ARROW_KNOCKBACK";
             case "flame":
-                name = "ARROW_FIRE";
-                break;
+                return "ARROW_FIRE";
             case "infinity":
-                name = "ARROW_INFINITE";
-                break;
+                return "ARROW_INFINITE";
             case "luck":
-                name = "LUCK";
-                break;
+                return "LUCK";
             case "lure":
-                name = "LURE";
-                break;
+                return "LURE";
             case "mending":
-                name = "MENDING";
-                break;
+                return "MENDING";
             case "vanishing_curse":
-                name = "VANISHING_CURSE";
-                break;
+                return "VANISHING_CURSE";
         }
-        return name;
+        return "not found";
     }
 
     public String setEnchantmentName(String s){
