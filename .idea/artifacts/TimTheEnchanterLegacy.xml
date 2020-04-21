@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="TimTheEnchanterLegacy">
+    <output-path>$PROJECT_DIR$/../../Testing Servers/Legacy/plugins</output-path>
+    <root id="archive" name="TimTheEnchanterLegacy.jar">
+      <element id="module-output" name="TimTheEnchanter" />
+    </root>
+  </artifact>
+</component>
