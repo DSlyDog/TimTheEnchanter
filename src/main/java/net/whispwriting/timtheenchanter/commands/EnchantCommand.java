@@ -45,20 +45,30 @@ public class EnchantCommand implements CommandExecutor {
         config = new ConfigFile(plugin);
         fancyText = config.get().getBoolean("fancy-text");
 
-        if (args.length >= 1 && args[0].equals("all")){
+        if (args.length >= 1 && args[0].equalsIgnoreCase("all")){
             if (!player.hasPermission("TimTheEnchanter.enchant.all")){
                 player.sendMessage(ChatColor.YELLOW + "[Tim] You lack the strength to wield such power!");
                 return true;
             }
+            args[0] = args[0].toLowerCase();
             ItemStack item = player.getInventory().getItemInMainHand();
-            if (player.hasPermission("TimTheEnchanter.enchant.unsafe")){
-                enchantAll(true, item, args, player);
-                player.sendMessage(ChatColor.YELLOW + "[Tim] " + getQuote());
-            }else{
-                enchantAll(false, item, args, player);
-                player.sendMessage(ChatColor.YELLOW + "[Tim] " + getQuote());
-            }
-            player.sendMessage(ChatColor.YELLOW + "[Tim] " + getQuote());
+            if (item.getType() != Material.AIR)
+                if (player.hasPermission("TimTheEnchanter.enchant.unsafe")){
+                    if (args.length == 2 && args[1].equals("safe")){
+                        enchantAll(false, item, args, player);
+                        player.sendMessage(ChatColor.YELLOW + "[Tim] " + getQuote());
+                    }else {
+                        enchantAll(true, item, args, player);
+                        player.sendMessage(ChatColor.YELLOW + "[Tim] " + getQuote());
+                    }
+                    return true;
+                }else{
+                    enchantAll(false, item, args, player);
+                    player.sendMessage(ChatColor.YELLOW + "[Tim] " + getQuote());
+                    return true;
+                }
+            else
+                player.sendMessage(ChatColor.YELLOW + "[Tim] I cannot enchant NOTHING you FOOL!");
         }else{
             if (args.length == 1 && args[0].equalsIgnoreCase("unbreakable")){
                 ItemStack item = player.getInventory().getItemInMainHand();
@@ -73,66 +83,95 @@ public class EnchantCommand implements CommandExecutor {
                 return true;
             }
             ItemStack item = player.getInventory().getItemInMainHand();
-            try {
-                int applyLvl = Integer.parseInt(args[1]);
-                if (fancyText){
-                    ItemMeta meta = item.getItemMeta();
-                    meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-                    List<String> lore = new ArrayList<>();
-                    Map<Enchantment, Integer> enchantments = item.getEnchantments();
-                    for (Map.Entry<Enchantment, Integer> enchantment : enchantments.entrySet()){
-                        String name = buildName(enchantment.getKey().getKey().getKey());
-                        String level = romanNumeral(Integer.toString(enchantment.getValue()));
-                        if (!name.equals(buildName(args[0])))
-                            lore.add(ChatColor.GRAY + name + " " + level);
-                    }
-                    Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(args[0]));
-                    if (enchantment == null){
-                        player.sendMessage(ChatColor.YELLOW + "[Tim] That is not an enchantment I can do.");
-                        return true;
-                    }
-                    String name = buildName(args[0]);
-                    String level = romanNumeral(args[1]);
-                    if (player.hasPermission("TimTheEnchanter.enchant.unsafe")){
-                        meta.addEnchant(enchantment, applyLvl, true);
-                        lore.add(ChatColor.GRAY + name + " " + level);
-                    }else{
-                        if (applyLvl > enchantment.getMaxLevel()){
-                            meta.addEnchant(enchantment, enchantment.getMaxLevel(), false);
-                            lore.add(ChatColor.GRAY + name + " " + romanNumeral(Integer.toString(enchantment.getMaxLevel())));
+            if (item.getType() != Material.AIR)
+                try {
+                    args[0] = args[0].toLowerCase();
+                    int applyLvl = Integer.parseInt(args[1]);
+                    if (fancyText){
+                        ItemMeta meta = item.getItemMeta();
+                        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+                        List<String> lore = new ArrayList<>();
+                        Map<Enchantment, Integer> enchantments = item.getEnchantments();
+                        for (Map.Entry<Enchantment, Integer> enchantment : enchantments.entrySet()){
+                            String name = buildName(enchantment.getKey().getKey().getKey());
+                            if (name.equals("Sweeping"))
+                                name = "Sweeping Edge";
+                            if (name.equalsIgnoreCase("Vanishing Curse"))
+                                name = "Curse of Vanishing";
+                            if (name.equals("Binding Curse"))
+                                name = "Curse of Binding";
+                            String level = romanNumeral(Integer.toString(enchantment.getValue()));
+                            if (!name.equals(buildName(args[0])))
+                                lore.add(ChatColor.GRAY + name + " " + level);
+                        }
+                        if (args[0].equals("sweeping_edge"))
+                            args[0] = "sweeping";
+                        if (args[0].equals("curse_of_vanishing"))
+                            args[0] = "vanishing_curse";
+                        if (args[0].equals("curse_of_binding"))
+                            args[0] = "binding_curse";
+                        Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(args[0]));
+                        if (enchantment == null){
+                            player.sendMessage(ChatColor.YELLOW + "[Tim] That is not an enchantment I can do.");
+                            return true;
+                        }
+                        String name = buildName(args[0]);
+                        String level = romanNumeral(args[1]);
+                        if (player.hasPermission("TimTheEnchanter.enchant.unsafe")){
+                            meta.addEnchant(enchantment, applyLvl, true);
+                            if (name.contains("Curse"))
+                                lore.add(ChatColor.RED + name);
+                            else
+                                lore.add(ChatColor.GRAY + name + " " + level);
                         }else{
-                            meta.addEnchant(enchantment, applyLvl, false);
-                            lore.add(ChatColor.GRAY + name + " " + level);
+                            if (applyLvl > enchantment.getMaxLevel()){
+                                meta.addEnchant(enchantment, enchantment.getMaxLevel(), false);
+                                if (name.contains("Curse"))
+                                    lore.add(ChatColor.RED + name);
+                                else
+                                    lore.add(ChatColor.GRAY + name + " " + romanNumeral(Integer.toString(enchantment.getMaxLevel())));
+                            }else{
+                                meta.addEnchant(enchantment, applyLvl, false);
+                                if (name.contains("Curse"))
+                                    lore.add(ChatColor.RED + name);
+                                else
+                                    lore.add(ChatColor.GRAY + name + " " + level);
+                            }
+                        }
+                        try {
+                            meta.getLore().clear();
+                        }catch(NullPointerException e){
+                            //
+                        }
+                        meta.setLore(lore);
+                        item.setItemMeta(meta);
+                    }else{
+                        if (args[0].equals("curse_of_vanishing"))
+                            args[0] = "vanishing_curse";
+                        if (args[0].equals("curse_of_binding"))
+                            args[0] = "binding_curse";
+                        Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(args[0]));
+                        if (enchantment == null){
+                            player.sendMessage(ChatColor.YELLOW + "[Tim] That is not an enchantment I can do.");
+                            return true;
+                        }
+                        if (player.hasPermission("TimTheEnchanter.enchant.unsafe")){
+                            item.addUnsafeEnchantment(enchantment, applyLvl);
+                        }else{
+                            if (applyLvl > enchantment.getMaxLevel()){
+                                item.addEnchantment(enchantment, enchantment.getMaxLevel());
+                            }else{
+                                item.addEnchantment(enchantment, applyLvl);
+                            }
                         }
                     }
-                    try {
-                        meta.getLore().clear();
-                    }catch(NullPointerException e){
-                        //
-                    }
-                    meta.setLore(lore);
-                    item.setItemMeta(meta);
-                }else{
-                    Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(args[0]));
-                    if (enchantment == null){
-                        player.sendMessage(ChatColor.YELLOW + "[Tim] That is not an enchantment I can do.");
-                        return true;
-                    }
-                    if (player.hasPermission("TimTheEnchanter.enchant.unsafe")){
-                        item.addUnsafeEnchantment(enchantment, applyLvl);
-                    }else{
-                        if (applyLvl > enchantment.getMaxLevel()){
-                            item.addEnchantment(enchantment, enchantment.getMaxLevel());
-                        }else{
-                            item.addEnchantment(enchantment, applyLvl);
-                        }
-                    }
+                    player.sendMessage(ChatColor.YELLOW + "[Tim] " + getQuote());
+                }catch(NumberFormatException e){
+                    player.sendMessage(ChatColor.YELLOW + "[Tim] You power level must be a number.");
+                    return true;
                 }
-                player.sendMessage(ChatColor.YELLOW + "[Tim] " + getQuote());
-            }catch(NumberFormatException e){
-                player.sendMessage(ChatColor.YELLOW + "[Tim] You power level must be a number.");
-                return true;
-            }
+            else
+                player.sendMessage(ChatColor.YELLOW + "[Tim] I cannot enchant NOTHING you FOOL!");
         }
         return true;
     }
@@ -157,8 +196,17 @@ public class EnchantCommand implements CommandExecutor {
                 }
                 for (Enchantment enchantment : Enchantment.values()) {
                     String name = buildName(enchantment.getKey().getKey());
+                    if (name.equals("Sweeping"))
+                        name = "Sweeping Edge";
+                    if (name.contains("Curse") && name.contains("Binding"))
+                        name = "Curse of Binding";
+                    if (name.contains("Curse") && name.contains("Vanishing"))
+                        name = "Curse of Vanishing";
                     meta.addEnchant(enchantment, applyLvl, true);
-                    lore.add(ChatColor.GRAY + name + " " + level);
+                    if (name.contains("Curse"))
+                        lore.add(ChatColor.RED + name);
+                    else
+                        lore.add(ChatColor.GRAY + name + " " + level);
                 }
                 try {
                     meta.getLore().clear();
@@ -193,23 +241,42 @@ public class EnchantCommand implements CommandExecutor {
                 ItemMeta meta = item.getItemMeta();
                 meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
                 List<String> lore = new ArrayList<>();
-                int applyLvl = 5;
-                if (args.length == 2) {
+                int applyLvl = 50;
+                if (args.length == 2 && !args[1].equals("safe")) {
                     try {
                         applyLvl = Integer.parseInt(args[1]);
-                    }catch(NumberFormatException e){
+                    } catch (NumberFormatException e) {
                         player.sendMessage(ChatColor.YELLOW + "[Tim] You power level must be a number.");
                         return;
                     }
                 }
                 for (Enchantment enchantment : Enchantment.values()) {
                     String name = buildName(enchantment.getKey().getKey());
-                    if (applyLvl > enchantment.getMaxLevel())
-                        meta.addEnchant(enchantment, enchantment.getMaxLevel(), false);
-                    else{
-                        meta.addEnchant(enchantment, applyLvl, false);
+                    if (name.equals("Sweeping"))
+                        name = "Sweeping Edge";
+                    if (name.contains("Curse") && name.contains("Binding"))
+                        name = "Curse of Binding";
+                    if (name.contains("Curse") && name.contains("Vanishing"))
+                        name = "Curse of Vanishing";
+                    try{
+                        if (applyLvl > enchantment.getMaxLevel()) {
+                            item.addEnchantment(enchantment, enchantment.getMaxLevel());
+                            meta.addEnchant(enchantment, enchantment.getMaxLevel(), false);
+                            if (name.contains("Curse"))
+                                lore.add(ChatColor.RED + name);
+                            else
+                                lore.add(ChatColor.GRAY + name + " " + romanNumeral(enchantment.getMaxLevel() + ""));
+                        } else {
+                            item.addEnchantment(enchantment, applyLvl);
+                            meta.addEnchant(enchantment, applyLvl, false);
+                            if (name.contains("Curse"))
+                                lore.add(ChatColor.RED + name);
+                            else
+                                lore.add(ChatColor.GRAY + name + " " + romanNumeral(Integer.toString(applyLvl)));
+                        }
+                    }catch(IllegalArgumentException e){
+                        //
                     }
-                    lore.add(ChatColor.GRAY + name + " " + romanNumeral(Integer.toString(applyLvl)));
                 }
                 try {
                     meta.getLore().clear();
@@ -222,7 +289,7 @@ public class EnchantCommand implements CommandExecutor {
                 item.setItemMeta(meta);
             }else{
                 int applyLvl = 5;
-                if (args.length == 2) {
+                if (args.length == 2 && !args[1].equals("safe")) {
                     try {
                         applyLvl = Integer.parseInt(args[1]);
                     }catch(NumberFormatException e){
@@ -231,11 +298,16 @@ public class EnchantCommand implements CommandExecutor {
                     }
                 }
                 for (Enchantment enchantment : Enchantment.values()) {
-                    if (applyLvl > enchantment.getMaxLevel())
-                        item.addEnchantment(enchantment, enchantment.getMaxLevel());
-                    else{
-                        item.addEnchantment(enchantment, applyLvl);
+                    try{
+                        if (applyLvl > enchantment.getMaxLevel())
+                            item.addEnchantment(enchantment, enchantment.getMaxLevel());
+                        else {
+                            item.addEnchantment(enchantment, applyLvl);
+                        }
+                    }catch(IllegalArgumentException e){
+                        //
                     }
+
                 }
                 if (addUnbreakable) {
                     ItemMeta meta = item.getItemMeta();
@@ -311,7 +383,10 @@ public class EnchantCommand implements CommandExecutor {
                 sub = sub.toUpperCase();
                 String sub2 = unsubbed.substring(1);
                 String finalSub = sub+sub2;
-                enchName += finalSub + " ";
+                if (i == enchStrList.size()-1)
+                    enchName += finalSub;
+                else
+                    enchName += finalSub + " ";
                 if (enchName.contains(" Of ")){
                     int index = enchName.indexOf('O');
                     char l = enchName.charAt(index);
@@ -327,7 +402,7 @@ public class EnchantCommand implements CommandExecutor {
             sub = sub.toUpperCase();
             String sub2 = unsubbed.substring(1);
             String finalSub = sub+sub2;
-            enchName += finalSub + " ";
+            enchName += finalSub;
             if (enchName.contains(" Of ")){
                 int index = enchName.indexOf('O');
                 char l = enchName.charAt(index);

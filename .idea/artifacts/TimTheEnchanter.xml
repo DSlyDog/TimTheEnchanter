@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" build-on-make="true" name="TimTheEnchanter">
-    <output-path>H:/Testing Servers/1.14/plugins</output-path>
+    <output-path>$PROJECT_DIR$/../../Testing Servers/1.16/plugins</output-path>
     <root id="archive" name="TimTheEnchanter.jar">
       <element id="module-output" name="TimTheEnchanter" />
     </root>
